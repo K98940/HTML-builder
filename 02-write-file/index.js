@@ -19,7 +19,7 @@ rl.setPrompt(colors.green + 'you can type text here:' + EOL + colors.reset);
 rl.prompt();
 
 rl.on('line', (line) => {
-  if (line.match(/(exit)/i)) {
+  if (line.toLocaleLowerCase().trim() === 'exit') {
     rl.close();
     return;
   }
