@@ -11,11 +11,8 @@ const colors = {
 const folderName = 'secret-folder';
 const path = join(__dirname, folderName);
 
-const readDir = (path) => {
-  return new Promise((resolve) => {
-    const fileList = readdir(path, { withFileTypes: true });
-    resolve(fileList);
-  });
+const readDir = async (path) => {
+  return await readdir(path, { withFileTypes: true });
 };
 
 const printFiles = (fileList) => {
