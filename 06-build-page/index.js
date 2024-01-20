@@ -1,7 +1,7 @@
 const { createReadStream, createWriteStream } = require('fs');
-const { readdir, readFile, rm, mkdir } = require('fs/promises');
+const { readdir, readFile, rm, mkdir, stat } = require('fs/promises');
 const { EOL } = require('os');
-const { join, extname } = require('path');
+const { join, extname, parse, basename } = require('path');
 const readline = require('readline');
 
 const getFilesList = async (path, fileType) => {
@@ -58,18 +58,60 @@ const replaceTemplates = async (path, components) => {
   });
 };
 
-const mergeCSS = async (path) => {
-  getFilesList(path, '.css').then((cssFiles) => {});
+const mergeCSS = async (distPath, stylesPath) => {
+  getFilesList(stylesPath, '.css').then((cssFiles) => {
+    const writeStream = createWriteStream(join(distPath, 'style.css'));
+    cssFiles.forEach((cssFile) => {
+      const file = join(cssFile.path, cssFile.name);
+      createReadStream(file).pipe(writeStream);
+    });
+  });
+};
+
+const updateFolder = async (src, dest) => {
+  const fileCopy = async (src, dest) => {
+    createReadStream(src).pipe(createWriteStream(dest));
+  };
+  const folderCopy = async (src, dest) => {
+    const isFolder = (await stat(src)).isDirectory();
+    const target = join(dest, basename(src));
+
+    if (isFolder) {
+      const files = await readdir(src, { withFileTypes: true });
+      await mkdir(target, { recursive: true });
+
+      files.forEach((file) => {
+        const isFolder = file.isDirectory();
+        if (isFolder) {
+          folderCopy(join(file.path, file.name), target);
+        } else {
+          const src = join(file.path, file.name);
+          const trg = join(target, file.name);
+          fileCopy(src, trg);
+        }
+      });
+    } else {
+      const objPath = parse(src);
+      const fileName = objPath.name + objPath.ext;
+      fileCopy(src, join(dest, fileName));
+    }
+  };
+
+  await mkdir(dest, { recursive: true });
+  folderCopy(src, dest);
 };
 
 const createBundle = async () => {
   const distPath = join(__dirname, 'project-dist');
+  const stylesPath = join(__dirname, 'styles');
+  const assetsPath = join(__dirname, 'assets');
 
   await rm(distPath, { recursive: true, force: true });
   await mkdir(distPath, { recursive: true });
   const components = await getComponents();
-  replaceTemplates(distPath, components);
-  mergeCSS(distPath);
+  await replaceTemplates(distPath, components);
+  await mergeCSS(distPath, stylesPath);
+  await updateFolder(assetsPath, distPath);
 };
 
 createBundle();

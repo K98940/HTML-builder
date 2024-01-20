@@ -106,3 +106,4 @@ HTML-builder.code-workspace
 .vscode/settings.json
 05-merge-styles/bck
 start.bat
+06-build-page/project-dist/
