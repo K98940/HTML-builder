@@ -105,3 +105,4 @@ dist
 HTML-builder.code-workspace
 .vscode/settings.json
 05-merge-styles/bck
+start.bat
